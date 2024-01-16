@@ -4,9 +4,10 @@
 BluetoothA2DPSink a2dp_sink;
 
 // put function declarations here
-void data_received_callback();
+void read_data_stream(const uint8_t *data, uint32_t length);
 
 void setup() {
+    Serial.begin(115200);
   // put your setup code here, to run once
     static const i2s_config_t i2s_config = {
         .mode = (i2s_mode_t) (I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN),
@@ -22,7 +23,8 @@ void setup() {
 
     a2dp_sink.set_i2s_config(i2s_config);
     a2dp_sink.start("JiggleJiggleBox");
-    a2dp_sink.set_on_data_received(data_received_callback);
+    Serial.println("Started!");
+    a2dp_sink.set_stream_reader(read_data_stream);
 }
 
 void loop() {
@@ -30,6 +32,11 @@ void loop() {
 }
 
 // put function definitions here
-void data_received_callback() {
-  Serial.println("Data packet received");
+void read_data_stream(const uint8_t *data, uint32_t length) {
+  int16_t *samples = (int16_t*) data;
+  int16_t thing = *samples;
+  int16_t left = (thing >> 8) & (0xFF);
+  int16_t right = thing & (0xFF);
+  uint32_t sample_count = length / 2;
+  Serial.printf("L: %d R: %d\n", left, right);
 }
