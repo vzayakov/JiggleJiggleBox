@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include "BluetoothA2DPSink.h"
+#include "dsps_fir.h"
+
+#define ELECTROMAG 32
 
 BluetoothA2DPSink a2dp_sink;
 
@@ -7,6 +10,9 @@ BluetoothA2DPSink a2dp_sink;
 void read_data_stream(const uint8_t *data, uint32_t length);
 
 void setup() {
+    // For controlling the electromagnet (MOSFET)
+    pinMode(ELECTROMAG, OUTPUT);
+
     Serial.begin(115200);
   // put your setup code here, to run once
     static const i2s_config_t i2s_config = {
@@ -29,6 +35,12 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly
+  digitalWrite(ELECTROMAG, HIGH);
+  Serial.println("HIGH");
+  delay(500);
+  digitalWrite(ELECTROMAG, LOW);
+  Serial.println("LOW");
+  delay(500);
 }
 
 // put function definitions here
