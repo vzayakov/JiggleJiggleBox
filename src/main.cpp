@@ -39,6 +39,39 @@ void setup() {
 }
 
 /*
+  define a library for Window
+*/
+
+struct DataWindow {
+  std::queue<int16_t> windowQueue;
+  int16_t currSize;
+  int16_t currAvg; 
+};
+
+typedef DataWindow* Window;
+
+Window newWindow() {
+  Window myWindow = (Window) (calloc(1, sizeof(DataWindow)));
+  return myWindow;
+}
+
+Window window = newWindow();
+
+bool runWindow (int16_t currIntensity) {
+  bool isBeat = (currIntensity >= (window->currAvg) + BEAT_THRESHOLD);
+  if (window->currSize < WINDOW_SIZE) {
+    (window->windowQueue).push(currIntensity);
+    window->currAvg = ((window->currAvg) / 2) + (currIntensity / 2); 
+  }
+  else {
+    int16_t removed = (window->windowQueue).front();
+    (window->windowQueue).push(currIntensity);
+    window->currAvg = ((window->currAvg) / 2) + (currIntensity / 2) - (removed / 2);
+  }
+  return isBeat;
+}
+
+/*
   define high as DIGITAL HIGH + ASSOCIATED DELAY
 */
 
@@ -63,20 +96,7 @@ void perform_LOW() {
   particular threshold
 */
 bool isBeat () {
-  uint8_t removed = 0;
-  uint8_t mid = WINDOW_SIZE / 2;
-  int16_t mid_elem = 0;
-  int16_t curr_elem = 0;
-  int16_t totSum = 0;
-  while (removed < WINDOW_SIZE) {
-    curr_elem = packets.front();
-    if (removed == mid) {
-      mid_elem = curr_elem;
-    }
-    removed++;
-    totSum += curr_elem;
-  }
-  return (mid_elem - (totSum / WINDOW_SIZE) >= BEAT_THRESHOLD);
+  return runWindow (packets.front());
 }
 
 /*
@@ -86,7 +106,7 @@ bool isBeat () {
 
 void loop() {
   // put your main code here, to run repeatedly
-  if (packets.size() < WINDOW_SIZE) {
+  if (packets.empty()) {
     perform_LOW();
   }
   else {
