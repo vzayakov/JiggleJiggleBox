@@ -38,6 +38,9 @@ void setup() {
     a2dp_sink.set_stream_reader(read_data_stream);
 }
 
+/*
+  define high as DIGITAL HIGH + ASSOCIATED DELAY
+*/
 
 void perform_HIGH() {
   digitalWrite(ELECTROMAG, HIGH);
@@ -45,12 +48,20 @@ void perform_HIGH() {
   delay(500);
 }
 
+/*
+  define high as DIGITAL LOW + ASSOCIATED DELAY
+*/
+
 void perform_LOW() {
   digitalWrite(ELECTROMAG, LOW);
   Serial.println("LOW");
   delay(500);
 }
 
+/*
+  a data packet constitutes a beat iff it is greater than the average intensity of the window by a 
+  particular threshold
+*/
 bool isBeat () {
   uint8_t removed = 0;
   uint8_t mid = WINDOW_SIZE / 2;
@@ -68,6 +79,11 @@ bool isBeat () {
   return (mid_elem - (totSum / WINDOW_SIZE) >= BEAT_THRESHOLD);
 }
 
+/*
+  if queue is not long enough, we never perform a high
+  if it is, we perform a high when a beat is detected
+*/
+
 void loop() {
   // put your main code here, to run repeatedly
   if (packets.size() < WINDOW_SIZE) {
@@ -82,6 +98,12 @@ void loop() {
     }
   }
 }
+
+
+/*
+  we unconditionally store each received packet in the global queue, storing it as the average of 
+  left and right stereo
+*/
 
 // put function definitions here
 void read_data_stream(const uint8_t *data, uint32_t length) {
