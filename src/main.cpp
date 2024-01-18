@@ -1,8 +1,13 @@
 #include <Arduino.h>
 #include "BluetoothA2DPSink.h"
 #include "dsps_fir.h"
+#include <queue>
+
+std::queue<int16_t> packets;
 
 #define ELECTROMAG 32
+#define WINDOW_SIZE 3
+#define BEAT_THRESHOLD 30
 
 BluetoothA2DPSink a2dp_sink;
 
@@ -33,14 +38,49 @@ void setup() {
     a2dp_sink.set_stream_reader(read_data_stream);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly
+
+void perform_HIGH() {
   digitalWrite(ELECTROMAG, HIGH);
   Serial.println("HIGH");
   delay(500);
+}
+
+void perform_LOW() {
   digitalWrite(ELECTROMAG, LOW);
   Serial.println("LOW");
   delay(500);
+}
+
+bool isBeat () {
+  uint8_t removed = 0;
+  uint8_t mid = WINDOW_SIZE / 2;
+  int16_t mid_elem = 0;
+  int16_t curr_elem = 0;
+  int16_t totSum = 0;
+  while (removed < WINDOW_SIZE) {
+    curr_elem = packets.front();
+    if (removed == mid) {
+      mid_elem = curr_elem;
+    }
+    removed++;
+    totSum += curr_elem;
+  }
+  return (mid_elem - (totSum / WINDOW_SIZE) >= BEAT_THRESHOLD);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly
+  if (packets.size() < WINDOW_SIZE) {
+    perform_LOW();
+  }
+  else {
+    if (isBeat()) {
+      perform_HIGH();
+    }
+    else {
+      perform_LOW();
+    }
+  }
 }
 
 // put function definitions here
@@ -49,6 +89,12 @@ void read_data_stream(const uint8_t *data, uint32_t length) {
   int16_t thing = *samples;
   int16_t left = (thing >> 8) & (0xFF);
   int16_t right = thing & (0xFF);
+  packets.push((int16_t)((left + right) / 2));
   uint32_t sample_count = length / 2;
   Serial.printf("L: %d R: %d\n", left, right);
 }
+
+// create a global data structure for buffer
+// whenever a packet is received, add to buffer
+// in loop, if the queue is not large enough, perpetual low. Else, compute whether the signal is 
+// a beat and set to high
