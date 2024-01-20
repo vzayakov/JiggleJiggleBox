@@ -5,7 +5,7 @@
 #include <queue>
 
 #define ELECTROMAG 32
-
+#define PERIOD_IN_MS 200
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN        14 // On Trinket or Gemma, suggest changing this to 1
@@ -85,5 +85,5 @@ void sendSqareWaveLED(int period){
 void loop() {
   // put your main code here, to run repeatedly
   //beat frequency of 5hz, which is period of 200ms
-  sendSqareWaveLED(200);
+  sendSqareWaveLED(PERIOD_IN_MS);
 }
