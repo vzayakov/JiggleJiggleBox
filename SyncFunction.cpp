@@ -44,9 +44,7 @@ void perform_HIGH() {
   Serial.println("HIGH2");
 }
 
-/*
-  define high as DIGITAL LOW + ASSOCIATED DELAY
-*/
+
 //same as perform low but now passes daly value as an argument
 void perform_LOW(int delayValUs) {
   digitalWrite(ELECTROMAG, LOW);
