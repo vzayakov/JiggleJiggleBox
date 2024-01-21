@@ -143,14 +143,14 @@
 #include <queue>
 
 #define ELECTROMAG 32
-#define PERIOD_IN_MS 200
+#define PERIOD_IN_MS 360
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN        14 // On Trinket or Gemma, suggest changing this to 1
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 200 // Popular NeoPixel ring size
 
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 BluetoothA2DPSink a2dp_sink;
 
@@ -168,7 +168,6 @@ void setup() {
     pinMode(ELECTROMAG, OUTPUT);
     pinMode(PIN, OUTPUT);
     Serial.begin(115200);
-    a2dp_sink.set_stream_reader(writeDataStream, false);
     pixels.begin();
 
 // initializes the esp32 bluetooth interface
@@ -187,12 +186,13 @@ static const i2s_config_t i2s_config = {
 
     a2dp_sink.set_i2s_config(i2s_config);
     a2dp_sink.start("JiggleJiggleBox");
+    a2dp_sink.set_stream_reader(writeDataStream);
 }
 
 //flashes LED and acts as delay for perform_high
 void flashLED(float delayValUs){
   for (int i=0; i<40; i++){
-       pixels.setPixelColor(i, pixels.Color(0,255,90,35));
+       pixels.setPixelColor(i, pixels.Color(0,255,90));
       
        pixels.show();   // Send the updated pixel colors to the hardware.
        delayMicroseconds(delayValUs/40);
@@ -218,12 +218,16 @@ void perform_LOW(int delayValUs) {
 //all delays in microseconds now as delay time between each led is low
 void sendSqareWaveLED(int period){
   int periodUs=period*1000; //the period in microseconds
-  if (isZero) {
+  if (isZero == false) {
     perform_HIGH();
+    flashLED(periodUs/2);
+    pixels.clear();
+    pixels.show();
   }
-  flashLED(periodUs/2);
-  pixels.clear();
-  pixels.show();
+  else {
+    pixels.clear();
+    pixels.show();
+  }
   //delay(2000);
   
   perform_LOW(periodUs/2);
